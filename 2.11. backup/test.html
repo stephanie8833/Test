@@ -1,0 +1,92 @@
+<!--test.html-->
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geocoding service</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+
+  </head>
+  <body>
+    <div id="floating-panel">
+      <input id="address" type="textbox" value="Boston MA">
+	  <p id="lat"></p>
+	  <p id="lng"></p>
+	  
+	  <input id="address2" type="textbox" value="Dallas Tx">
+	  <p id="lat2"></p>
+	  <p id="lng2"></p>
+	  
+	  <input id="Range" type="number" value="1500" step= "any"/>
+	 
+      <input id="submit" type="button" value="Geocode">
+	  	  
+	  <p id ="distance"></p>
+	  
+	  <p id = "inRange"></p>
+	  
+    </div>
+    <script>
+	var nAttempts = 0;
+	function init() {
+		var geocoder = new google.maps.Geocoder();
+		
+		document.getElementById('submit').addEventListener('click', function() {
+			nAttempts = nAttempts + 1;
+		
+			var strAddressID = document.getElementById('address').value;
+			var strAddressID2 = document.getElementById('address2').value;
+			var lat1;
+			var lon1;
+			var lat2;
+			var lon2;
+			var nRange = parseFloat(document.getElementById("Range").value, 10);
+		
+			getGeoLocation(strAddressID,function(nLatitude,nLongitude){
+				lat1=nLatitude;
+				lon1=nLongitude;
+		
+				console.log(lat1);
+				console.log(lon1);
+				
+				getGeoLocation(strAddressID2,function(nLatitude,nLongitude){
+
+					lat2=nLatitude;
+					lon2=nLongitude;
+			
+					console.log(lat2);
+					console.log(lon2);
+				}, null);
+			}, null);
+	
+		
+			//block to wait for 4 variable
+			var intvl = setInterval(function() {
+				if (lon1 && lon2) { 
+					clearInterval(intvl);
+					nDistance = getDistance(lat1, lon1, lat2, lon2,0); 
+					document.getElementById("distance").innerHTML = nDistance;
+					if (checkDistance(nDistance,nRange)){ 
+						document.getElementById("inRange").innerHTML = "In range";
+					}
+					else{
+						document.getElementById("inRange").innerHTML = "Out of range";
+					}
+		
+			}
+		}, 10);   //wait for 10 milisecond
+
+		});
+	}
+	
+    // 10 requests per second for standard Usage
+    </script>
+	<script src="https://maps.googleapis.com/maps/api/js?callback=init" async defer></script>
+	<!--async downloads the file during HTML parsing and will pause the HTML parser to execute it when it has finished downloading.-->
+	<!--defer downloads the file during HTML parsing and will only execute it after the parser has completed. defer scripts are also guarenteed to execute in the order that they appear in the document.-->
+		<script type="text/javascript"src="./UpstartGeoDistance.js"></script>
+
+  </body>
+</html>
