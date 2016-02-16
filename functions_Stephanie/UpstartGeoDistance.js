@@ -1,30 +1,46 @@
 /********************************************************************************
- * Overview:   	This file contains three functions: getGeoLocation, 
- *				getDistance, checkDistance.
+ * Overview:   	This file contains functions to get geoLocation, 
+ *              calculate distance and create bounding box 
+ *				
  *					        
  * Created:     Feb.10, 2016
  * Creator:     Stephanie Zeng
  ********************************************************************************/
  
 /**
- * Queue                                                        
+ * Creating Queue to buffer the API access requests.                                                      
  *                                    
- * @param {string} .
+ * @param {string}   strStreetID street address input.
+ * @param {string}   strCityID city input.
+ * @param {string}   strStateID state input. 
+ * @param {string}   strAttempt time to attempt retry.
+ * @param {number}   nZipCodeID zipcode input.
+ * @param {function} fnCallback callback function.
+ * @param {object}   oRetries retry times.
+
  * @return {function} .                                                            
  */
  
 function getGeoLocationUsingQ (strStreetID,strCityID,strStateID,nZipCodeID,fnCallback, strAttempt, oRetries){
 	
-	//Set queue to static
+	//Set queue to static.
 	if(typeof getGeoLocationUsingQ.queue == "undefined") {
 		getGeoLocationUsingQ.queue = [];
 	}
 	getGeoLocationUsingQ.queue.push({strStreetID,strCityID,strStateID,nZipCodeID,fnCallback, strAttempt, oRetries});
-	//console.log(getGeoLocationUsingQ.queue);
 	if(!dequeue.goingOn){
 		dequeue();
 	}
 }
+
+
+/**
+ * Checking if Queue is empty.                                                      
+ *                                    
+ * @param {function} fnCallback.
+ *
+ * @return {function} fnCallback.                                                            
+ */
 
 function isQueueEmpty(fnCallback){
 	if (getGeoLocationUsingQ.queue.length!=0){
@@ -34,7 +50,15 @@ function isQueueEmpty(fnCallback){
 	}
 }
 
-function dequeue(){
+
+/**
+ * Clean up the Queue and call geoLocation function.                                                      
+ *                                    
+ * @return {function} .                                                            
+ */
+
+function dequeue() {
+    //Set dequeue.goingOn to static.
 	if(typeof dequeue.goingOn == "undefined") {
 		dequeue.goingOn = false;
 	}
@@ -46,7 +70,6 @@ function dequeue(){
 			getGeoLocationUsingQ.queue[0].oRetries);
 		}
 	});
-	//console.log(getGeoLocationUsingQ.queue.length);
 }
 
 
@@ -56,8 +79,15 @@ var UPSTART_INVALID_GEO = 0;
 /**
  * Find the latitudes and longtitudes for the target point.                                                         
  *                                    
- * @param {string} strAddress Street address string.
- * @return {function} fnCallback Callback for latitudes and longtitudes.                                                            
+ * @param {string}   strStreet street address input.
+ * @param {string}   strCity city input.
+ * @param {string}   strState state input. 
+ * @param {string}   strAttempt time to attempt retry.
+ * @param {number}   nZipCode zipcode input.
+ * @param {function} fnCallback callback function.
+ * @param {object}   oRetries retry times.
+
+ * @return {function} fnCallback store latitudes and longtitudes for the target point.                                                            
  */
 function getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, strAttempt, oRetries) {
 	
@@ -65,27 +95,14 @@ function getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, strAt
 	if(strAttempt==null) {}
 	
 	var geocoder = new google.maps.Geocoder(); 
-	//console.log(strStreet,strCity, strState, nZipCode);
 	geocoder.geocode({'address': strStreet + strCity + strState + nZipCode}, function(results, status) {  
 		// Async wait, check the map
 		
 		if (status === google.maps.GeocoderStatus.OK) {
 			
-			var validAddress = checkAddress(results,strCity, strState, nZipCode);
-			/*if (results[0].geometry.location_type == "ROOFTOP"){
-						// do nothing 
-				checkAddress(results,strCity, strState, nZipCode);
-		
-			}else if (results[0].geometry.location_type == "RANGE_INTERPOLATED"){
-						//do nothing
-				checkAddress(results,strCity, strState, nZipCode);
-			}else if (results[0].geometry.location_type == "GEOMETRIC_CENTER"){
-						// do nothing 
-				checkAddress(results,strCity, strState, nZipCode);
-			}else if (results[0].geometry.location_type == "APPROXIMATE"){
-						//check zipcode, state, city 
-				checkAddress(results,strCity, strState, nZipCode);
-			}	*/					
+			// Status: ROOFTOP, RANGE_INTERPOLATED, GEOMETRIC_CENTER, APPROXIMATE
+			// Check if Google map read the right address
+			var validAddress = checkAddress(results,strCity, strState, nZipCode);			
 			
 			if(validAddress){
 				var nLatitude  = results[0].geometry.location.lat();
@@ -107,18 +124,18 @@ function getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, strAt
 		//indicates that the geocode was successful but returned no results. 
 		//This may occur if the geocoder was passed a non-existent address.
 		else if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
-			console.log("ZERO_RESULTS");
+			//console.log("ZERO_RESULTS");
 			fnCallback(UPSTART_INVALID_GEO,UPSTART_INVALID_GEO);
 		} 
 		
 		//indicates that you are over your quota
 		else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
-			console.log("OVER_QUERY_LIMIT");
+			//console.log("OVER_QUERY_LIMIT");
 			oRetries.n -= 1;
-			console.log("RETRY " + oRetries.n);
+			//console.log("RETRY " + oRetries.n);
 			if(oRetries.n==0) {
 				fnCallback(UPSTART_INVALID_GEO,UPSTART_INVALID_GEO);
-				console.log("OVER_QUERY_LIMIT");
+				//console.log("OVER_QUERY_LIMIT");
 			}
 			else {
 				setTimeout( function() {getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, null, oRetries);}, 1000);
@@ -128,20 +145,20 @@ function getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, strAt
 		//indicates that your request was denied
 		else if (status === google.maps.GeocoderStatus.REQUEST_DENIED) {
 			fnCallback(UPSTART_INVALID_GEO,UPSTART_INVALID_GEO);
-			console.log("REQUEST_DENIED");
+			//console.log("REQUEST_DENIED");
 		} 
 		
 		//generally indicates that the query (address, components or latlng) is missing
 		else if (status === google.maps.GeocoderStatus.INVALID_REQUEST){
 			fnCallback(UPSTART_INVALID_GEO,UPSTART_INVALID_GEO);
-			console.log("INVALID_REQUEST");
+			//console.log("INVALID_REQUEST");
 		} 
 		
 		//indicates that the request could not be processed due to a server error. 
 		//The request may succeed if you try again.
 		else if (status === google.maps.GeocoderStatus.UNKNOWN_ERROR){
 			fnCallback(UPSTART_INVALID_GEO,UPSTART_INVALID_GEO);
-			console.log("UNKNOWN_ERROR");
+			//console.log("UNKNOWN_ERROR");
 		}
 	});
 
@@ -150,37 +167,39 @@ function getGeoLocation(strStreet,strCity, strState, nZipCode, fnCallback, strAt
 
 /**
  * Check if Google Map API return the right address.                                                         
- *                                    
- * @param {string} strAddress Street address string.
+ *   
+ * @param {array}    results address recognized by Google Map.
+ * @param {string}   strCity city input.
+ * @param {string}   strState state input. 
+ * @param {number}   nZipCode zipcode input.
+ *
  * @return {function} fnCallback Callback for latitudes and longtitudes.                                                            
  */
 function checkAddress (results,strCity, strState, nZipCode){
-	//console.log(strCity);
-	//console.log(results[0].address_components[0].short_name);
-	
+
 	for(var i = 0; i < results[0].address_components.length;i++){
 		
 		//console.log(results[0].address_components[i]);
 		if(results[0].address_components[i].short_name == nZipCode){
 			var bZipCodeCheck = 1; 
-			console.log("zipcode checked");
+			//console.log("zipcode checked");
 		}
 		if(results[0].address_components[i].short_name == strCity){
-			console.log("city checked");
+			//console.log("city checked");
 			var bCityCheck = 1; 
 		}
 		if(results[0].address_components[i].short_name == strState){
-			console.log("state checked");
+			//console.log("state checked");
 			var bStateCheck = 1; 
 		}
 		
 	}
 	
 	if (bZipCodeCheck && bCityCheck && bStateCheck ){
-		console.log("address is valid");
+		//console.log("address is valid");
 		return true;
 	}else{
-		console.log("invalid return");
+		//console.log("invalid return");
 		return false;
 	}
 }
@@ -255,4 +274,16 @@ function getDistance(nLat1, nLon1, nLat2, nLon2, nUnits) {
 	} else if( nDistance > nRange ) {
 		return false;
 	}
-}
+ }
+
+/**
+ *  Creating bounding box for the location.  
+ *                                                
+ *  @param {number} .                        
+ *  @param {number} nRange ideal range for two points.                              
+ *  @return {boolean} true if the distance is in the range of 0~nRange.  
+ */
+ function createBoundingBox(lat1, lon1, lat2, lon2) {
+     // (x1,y1),(x2,y2)
+     //x1<x<x2
+ }

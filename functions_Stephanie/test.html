@@ -1,4 +1,4 @@
-<!--test.html-->
+﻿<!--test.html-->
 
 
 <!DOCTYPE html>
@@ -73,27 +73,25 @@
 			getGeoLocationUsingQ(strStreetID,strCityID,strStateID,nZipCodeID,function(nLatitude,nLongitude){
 				lat1=nLatitude;
 				lon1=nLongitude;
+
+				document.getElementById("lat").innerHTML = lat1;
+				document.getElementById("lng").innerHTML = lon1;
 		
-				console.log(lat1);
-				console.log(lon1);
-				
-				
 			}, null);
 			
 			getGeoLocationUsingQ(strStreetID2,strCityID2,strStateID2,nZipCodeID2,function(nLatitude,nLongitude){
 
 					lat2=nLatitude;
 					lon2=nLongitude;
-			
-					console.log(lat2);
-					console.log(lon2);
+
+					document.getElementById("lat2").innerHTML = lat2;
+					document.getElementById("lng2").innerHTML = lon2;
 				}, null);
 			
 			//block to wait for 4 variable
 			var intvl = setInterval(function() {
 				if (lon1 && lon2) { 
 					clearInterval(intvl);
-					console.log(typeof lon2);
 					nDistance = getDistance(lat1, lon1, lat2, lon2,0); 
 					document.getElementById("distance").innerHTML = nDistance;
 					if (checkDistance(nDistance,nRange)){ 
@@ -103,11 +101,6 @@
 						document.getElementById("inRange").innerHTML = "Out of range";
 					}
 				}
-				/*else if (typeof lon1 == "undefined" ||typeof  lon2 == "undefined"){
-					clearInterval(intvl);
-					document.getElementById("distance").innerHTML = "invalid address";
-					document.getElementById("inRange").innerHTML = " ";
-				}*/
 		}, 10);   //wait for 10 milisecond
 			
 		});
