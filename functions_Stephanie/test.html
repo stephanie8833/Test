@@ -94,11 +94,17 @@
 					clearInterval(intvl);
 					nDistance = getDistance(lat1, lon1, lat2, lon2,0); 
 					document.getElementById("distance").innerHTML = nDistance;
-					if (checkDistance(nDistance,nRange)){ 
-						document.getElementById("inRange").innerHTML = "In range";
-					}
-					else{
-						document.getElementById("inRange").innerHTML = "Out of range";
+
+					var boundingCoords = createBoundingBox(lat1, lon1, nRange);
+					var nTopLeftLat = boundingCoords[0];
+					var nTopLeftLng = boundingCoords[1];
+					var nBottomRightLat = boundingCoords[2];
+					var nBottomRightLng = boundingCoords[3];
+
+					if (nTopLeftLat <= lat2 <= nBottomRightLat && nBottomRightLng <= lon2 <= nTopLeftLng) {
+					    document.getElementById("inRange").innerHTML = "In range";
+					} else {
+					    document.getElementById("inRange").innerHTML = "Out of range";
 					}
 				}
 		}, 10);   //wait for 10 milisecond

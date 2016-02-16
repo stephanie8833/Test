@@ -257,24 +257,7 @@ function getDistance(nLat1, nLon1, nLat2, nLon2, nUnits) {
 	
 }
 
- 
-/**
- *  Check if the ditance is in desired range.  
- *                                                
- *  @param {number} nDistance the distance between two points.                        
- *  @param {number} nRange ideal range for two points.                              
- *  @return {boolean} true if the distance is in the range of 0~nRange.  
- */
-
- function checkDistance(nDistance,nRange) {
-	
-	//Check the distance is in the range of 0~desired number.
-	if (nDistance <= nRange){
-		return true;
-	} else if( nDistance > nRange ) {
-		return false;
-	}
- }
+ var UPSTART_NAUTICAL_MILE_TO_STATUTE_MILES = 1.15078;
 
 /**
  *  Creating bounding box for the location.  
@@ -283,7 +266,12 @@ function getDistance(nLat1, nLon1, nLat2, nLon2, nUnits) {
  *  @param {number} nRange ideal range for two points.                              
  *  @return {boolean} true if the distance is in the range of 0~nRange.  
  */
- function createBoundingBox(lat1, lon1, lat2, lon2) {
-     // (x1,y1),(x2,y2)
-     //x1<x<x2
+ function createBoundingBox(nLat, nLng, nRange) {
+     var nRangeInStatute = nRange * UPSTART_NAUTICAL_MILE_TO_STATUTE_MILES;
+     var nHalfSideLength = Math.sqrt(Math.pow(nRangeInStatute,2 ) / 2);
+     var nTopLeftLat     = nLat - nHalfSideLength;
+     var nTopLeftLng     = nLng + nHalfSideLength;
+     var nBottomRightLat = nLat + nHalfSideLength;
+     var nBottomRightLng = nLng - nHalfSideLength;
+     return [nTopLeftLat, nTopLeftLng, nBottomRightLat, nBottomRightLng];
  }
