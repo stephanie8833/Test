@@ -16,7 +16,7 @@
 	  <input id="Street1" type="textbox" value="">
 	  <input id="City1"    type="textbox" value="Gainesville">
 	  <input id="State1"   type="textbox" value="TX">
-	  <input id="ZipCode1" type="number"  value="76240">
+	  <input id="ZipCode1" type="number"  value="">
 
       <p id="lng"></p>
 	  <p id="lat"></p>
@@ -27,7 +27,7 @@
 	  <input id="Street2" type="textbox" value="">
 	  <input id="City2"    type="textbox" value="Dallas">
 	  <input id="State2"   type="textbox" value="TX">
-	  <input id="ZipCode2" type="number"  value="75201">
+	  <input id="ZipCode2" type="number"  value="">
 
       <p id="lng2"></p>
 	  <p id="lat2"></p>
@@ -65,6 +65,8 @@
 			var strCityID2 = document.getElementById('City2').value;
 			var strStateID2 = document.getElementById('State2').value;
 			var nZipCodeID2 = document.getElementById('ZipCode2').value;
+
+			console.log("we are comparing " + strCityID + "," + strStateID + " to " + strCityID2 + "," + strStateID2);
 
 			var lon1;
 			var lat1;
@@ -110,24 +112,48 @@
 					    nLatToY2 = nLatToY;
 					}, null);
 
+					nDistanceXY = distanceXY(nLonToX1, nLatToY1, nLonToX2, nLatToY2);
 
-					var boundingCoords = createBoudingBox(nLonToX1, nLatToY1, nRange);
+					tolerance(nDistance, nDistanceXY);
 
-					var nTopLeftLngX = boundingCoords[0];
-					var nTopLeftLatY = boundingCoords[1];
+
+					toWebMercator(lon1, lat1, function (mercatorX_lon, mercatorY_lat) {
+					    mercatorX_lon1 = mercatorX_lon;
+					    mercatorY_lat1 = mercatorY_lat;
+					}, null);
+
+					toWebMercator(lon2, lat2, function (mercatorX_lon, mercatorY_lat) {
+					    mercatorX_lon2 = mercatorX_lon;
+					    mercatorY_lat2 = mercatorY_lat;
+					}, null);
+
+					nDistanceByWebMercator = distanceByWebMercator(mercatorX_lon1, mercatorY_lat1, mercatorX_lon2, mercatorY_lat2);
+					toleranceForWM(nDistance, nDistanceByWebMercator);
+
 					
-					var nBottomRightLngX = boundingCoords[2];
-					var nBottomRightLatY = boundingCoords[3];
+
+					/*var boundingCoords = createBoundingBox(lon1, lat1, nRange);
+					
+					var nTopLeftLng = boundingCoords[0];
+					var nTopLeftLat = boundingCoords[1];
+					
+					var nBottomRightLng = boundingCoords[2];
+					var nBottomRightLat = boundingCoords[3];
+
+					console.log("Longitude: value="+ lon2 + " bounds=(" + nTopLeftLng + " to " + nBottomRightLng + ") in=" +
+                        (lon2 >= nTopLeftLng && lon2 <= nBottomRightLng));
+					console.log("Latitude: value=" + lat2 + " bounds=(" + nTopLeftLat + " to " + nBottomRightLat + ") in=" +
+                        (lat2 <= nTopLeftLat && lat2 >= nBottomRightLat));*/
             
-					if (nLonToX2 >= nTopLeftLngX &&
-                        nLatToY2 <= nTopLeftLatY &&
-                        nLonToX2 <= nBottomRightLngX &&
-                        nLatToY2 >= nBottomRightLatY)
+					/*if (lon2 >= nTopLeftLng &&
+                        lat2 <= nTopLeftLat &&
+                        lon2 <= nBottomRightLng &&
+                        lat2 >= nBottomRightLat)
 					{
 					    document.getElementById("inRange").innerHTML = "In range";
 					} else {
 					    document.getElementById("inRange").innerHTML = "Out of range";
-					}
+					}*/
 				}
 		}, 10);   //wait for 10 milisecond
 			

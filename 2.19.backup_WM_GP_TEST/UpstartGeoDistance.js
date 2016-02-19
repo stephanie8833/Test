@@ -84,13 +84,13 @@ var UPSTART_INVALID_GEO = 0;
 /**
  * Find the latitudes and longtitudes for the target point.                                                         
  *                                    
- * @param {string}    strStreet Street address input.
- * @param {string}    strCity City input.
- * @param {string}    strState State input. 
- * @param {string}    strAttempt Time to attempt retry.
- * @param {number}    nZipCode Zipcode input.
- * @param {function}  fnCallback Callback function.
- * @param {object}    oRetries Retry times.
+ * @param {string}   strStreet Street address input.
+ * @param {string}   strCity City input.
+ * @param {string}   strState State input. 
+ * @param {string}   strAttempt Time to attempt retry.
+ * @param {number}   nZipCode Zipcode input.
+ * @param {function} fnCallback Callback function.
+ * @param {object}   oRetries Retry times.
 
  * @return {function} fnCallback Store latitudes and longtitudes for the target point.                                                            
  */
@@ -188,7 +188,7 @@ function checkAddress (results,strCity, strState, nZipCode){
 		
 	}
 	
-	if (bCityCheck && bStateCheck ){
+	if (/*bZipCodeCheck &&*/ bCityCheck && bStateCheck ){
 		return true;
 	} else{
 		return false;
@@ -211,7 +211,7 @@ function checkAddress (results,strCity, strState, nZipCode){
  *    @param {number} nUnit        The unit you desire for results                             
  *           where: 'M' is statute miles                         
  *                  'K' is kilometers                                  
- *                  'N' is nautical miles.    
+ *                  'N' is nautical miles (default).    
  *    Resource:https://www.geodatasource.com/developers/javascript                            
  */
 function getDistance(nLon1,nLat1, nLon2, nLat2,  nUnits) {
@@ -244,49 +244,77 @@ function getDistance(nLon1,nLat1, nLon2, nLat2,  nUnits) {
 	}
 	
     // Return the distance result.
+	console.log("real distance is: " + nDistance);
 	return nDistance;
+	
 }
 
 
 var UPSTART_NAUTICAL_MILE_TO_STATUTE_MILES = 1.151;
 var UPSTART_KM_TO_STATUTE_MILES = 0.62137;
-var UPSTART_DEGREE_TO_RADIUS = 0.0174533;
-
-var UPSTART_EARTH_RADIANS = 3959; //Unit:miles
-
-/**
- *  Converting geographic coordinate system to Catism coordinate system.
- *  Formula from:Gall-Peters projection:https://en.wikipedia.org/wiki/Gall%E2%80%93Peters_projection
- *                                                
- *  @param {number} nLat Latitude of driver's location.     
- *  @param {number} nLng Longtitude of driver's location.  
- * 
- */
-function geoGraphicToCartism(nLat, nLon, fnCallback) {
-    var nLonToX = (UPSTART_EARTH_RADIANS * nLon * UPSTART_DEGREE_TO_RADIUS) / Math.sqrt(2);
-    var nLatToY = UPSTART_EARTH_RADIANS * Math.sqrt(2) * Math.sin(nLat * UPSTART_DEGREE_TO_RADIUS);
-    fnCallback(nLonToX, nLatToY);
-
-}
-
 
 /**
  *  Creating bounding box for the location.  
  *                                                
- *  @param {number} nLonToX X coordinate for longtitude.     
- *  @param {number} nLatToY Y coordinate of latitude. 
+ *  @param {number} nLat Latitude of driver's location.     
+ *  @param {number} nLng Longtitude of driver's location. 
  *  @param {number} nRange Ideal range for two points.           
  *
- *  @return {array} The array contains [nTopLeftLngX, nTopLeftLatY, nBottomRightLngX, nBottomRightLatY].  
+ *  @return {array} The array contains [nTopLeftLat, nTopLeftLng, nBottomRightLat, nBottomRightLng].  
  */
 
-function createBoudingBox(nLonToX, nLatToY, nRange) {
-    var nHalfSize        = nRange;
-    var nTopLeftLngX     = nLonToX - nHalfSize;
-    var nTopLeftLatY     = nLatToY + nHalfSize;
-    var nBottomRightLngX = nLonToX + nHalfSize;
-    var nBottomRightLatY = nLatToY - nHalfSize;
+var R = 3959; //unit:miles
 
-    return [nTopLeftLngX, nTopLeftLatY, nBottomRightLngX, nBottomRightLatY];
-        
+//formula from:Gall-Peters projection:https://en.wikipedia.org/wiki/Gall%E2%80%93Peters_projection
+
+
+/**
+ *  Converting geographic coordinate system to Catism coordinate system.  
+ *                                                
+ *  @param {number} nLat Latitude of driver's location.     
+ *  @param {number} nLng Longtitude of driver's location. 
+ *  @param {number} nRange Ideal range for two points.           
+ *
+ *  @return {array} The array contains [nTopLeftLat, nTopLeftLng, nBottomRightLat, nBottomRightLng].  
+ */
+function geoGraphicToCartism(nLat, nLon, callBackFn) {
+    var nLonToX = (R * nLon * 0.0174533) / Math.sqrt(2);
+    var nLatToY = R * Math.sqrt(2) * Math.sin(nLat * 0.0174533);
+    //var z = R * Math.sin(lat*0.0174533);
+    callBackFn(nLonToX, nLatToY);
+}
+
+
+function distanceXY(nLonToX1, nLatToY1, nLonToX2, nLatToY2) {
+    var nDistanceXY = Math.sqrt((nLonToX1 - nLonToX2) * (nLonToX1 - nLonToX2) + (nLatToY1 - nLatToY2) * (nLatToY1 - nLatToY2));
+
+    console.log("Distance by Gall Peters is: " + nDistanceXY);
+    return nDistanceXY;
+}
+
+function tolerance(nDistance, nDistanceXY) {
+    var nTolerance = nDistanceXY - nDistance;
+    console.log("the difference for GP is: " + nTolerance );
+
+}
+
+
+function toWebMercator (lon, lat, fnCallBack) {
+    var mercatorX_lon = R* (lon * 0.0174533);
+    var mercatorY_lat = R * Math.log(Math.tan(Math.PI / 4 + (lat * 0.0174533)/2));
+
+    fnCallBack (mercatorX_lon,mercatorY_lat);
+
+}
+
+function distanceByWebMercator(mercatorX_lon1, mercatorY_lat1, mercatorX_lon2, mercatorY_lat2) {
+    var nDistanceByWebMercator = Math.sqrt((mercatorX_lon1 - mercatorX_lon2) * (mercatorX_lon1 - mercatorX_lon2) + (mercatorY_lat1 - mercatorY_lat2) * (mercatorY_lat1 - mercatorY_lat2));
+    console.log(" distanceByWebMercator is: " + nDistanceByWebMercator);
+    return nDistanceByWebMercator;
+}
+
+function toleranceForWM(nDistance, nDistanceByWebMercator) {
+    var nTolerance2 = nDistanceByWebMercator - nDistance;
+    console.log("the difference for WM is: " + nTolerance2 );
+
 }
